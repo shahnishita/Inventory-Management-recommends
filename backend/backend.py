@@ -14,13 +14,12 @@ UPLOAD_FOLDER = os.path.join(os.getcwd(), "recommendations")  # Absolute path
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the folder exists
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER  # ✅ Set it properly in config
 
-# Connect to PostgreSQL
 conn = psycopg2.connect(
-    database="postgres",
-    user="postgres",
-    password="nishu*2003",
-    host="localhost",
-    port="5432"
+    database=os.getenv("DB_NAME"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    host=os.getenv("DB_HOST"),  # Change to cloud-hosted DB
+    port=os.getenv("DB_PORT")
 )
 cursor = conn.cursor()
 load_dotenv()

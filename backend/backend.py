@@ -10,9 +10,10 @@ from dotenv import load_dotenv
 app = Flask(__name__)
 CORS(app)  # Allow frontend to access backend
 # ✅ Define UPLOAD_FOLDER correctly
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "recommendations")  # Absolute path
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the folder exists
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER  # ✅ Set it properly in config
+
+UPLOAD_FOLDER = "/tmp/recommendations"  # Use /tmp instead
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Works on Vercel
+
 
 # Connect to PostgreSQL
 conn = psycopg2.connect(

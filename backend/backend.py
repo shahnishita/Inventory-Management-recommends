@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 app = Flask(__name__)
 CORS(app)
 
-# ✅ Define and set UPLOAD_FOLDER correctly
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "recommendations")
+# ✅ Define and set UPLOAD_FOLDER correctly (Using /tmp for Vercel compatibility)
+UPLOAD_FOLDER = "/tmp/recommendations"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the folder exists
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
@@ -40,9 +40,7 @@ def get_products():
         with conn.cursor() as cursor:
             cursor.execute("SELECT product_id, name, price, category FROM Product;")
             products = cursor.fetchall()
-        return jsonify([
-            {"product_id": p[0], "name": p[1], "price": p[2], "category": p[3]} for p in products
-        ])
+        return jsonify([{"product_id": p[0], "name": p[1], "price": p[2], "category": p[3]} for p in products])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -53,9 +51,7 @@ def get_customers():
         with conn.cursor() as cursor:
             cursor.execute("SELECT customer_id, name, email, location FROM Customer;")
             customers = cursor.fetchall()
-        return jsonify([
-            {"customer_id": c[0], "name": c[1], "email": c[2], "location": c[3]} for c in customers
-        ])
+        return jsonify([{"customer_id": c[0], "name": c[1], "email": c[2], "location": c[3]} for c in customers])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -177,6 +173,21 @@ def recommendations(customer_id):
         return jsonify({"customer_id": customer_id, "recommendations": recommendations})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# ✅ File Upload Route (Updated for Vercel)
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(file_path)
+
+    return jsonify({'message': 'File uploaded successfully', 'file_path': file_path})
 
 # ✅ Run Flask app
 if __name__ == '__main__':

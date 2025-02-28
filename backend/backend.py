@@ -10,10 +10,9 @@ from dotenv import load_dotenv
 app = Flask(__name__)
 CORS(app)  # Allow frontend to access backend
 # ✅ Define UPLOAD_FOLDER correctly
-
-UPLOAD_FOLDER = "/tmp/recommendations"  # Use /tmp instead
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Works on Vercel
-
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "recommendations")  # Absolute path
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the folder exists
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER  # ✅ Set it properly in config
 
 # Connect to PostgreSQL
 conn = psycopg2.connect(
@@ -23,12 +22,6 @@ conn = psycopg2.connect(
     host="localhost",
     port="5432"
 )
-
-UPLOAD_FOLDER = "/tmp/recommendations"  # Use /tmp instead of /var/task
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the folder exists
-
-
-
 cursor = conn.cursor()
 load_dotenv()
 GEMINI_API_KEY =  "AIzaSyBs-dLOxOuZ3WUNMIstaUnvxmAe4c20cFE"  # Direct assignment OR use .env file
@@ -170,9 +163,10 @@ def get_product_recommendations(history):
     model = genai.GenerativeModel("gemini-1.5-pro")
     response = model.generate_content(prompt)
 
-    return response.text if response.text else "No recommendations available."
+    return response.text  # Extract text response from Gemini
 
 
+    return response["choices"][0]["message"]["content"]
 # Function to write recommendations to a Word file
 def write_to_word(customer_id, history, recommendations):
     doc = Document()
@@ -186,12 +180,8 @@ def write_to_word(customer_id, history, recommendations):
     doc.add_paragraph(recommendations)
 
     filename = f"recommendations_customer_{customer_id}.docx"
-    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    doc.save(file_path)
+    doc.save(filename)
     return filename
-def get_db_cursor():
-    return conn.cursor()
-
 @app.route('/recommendations/<int:customer_id>')
 def recommendations(customer_id):
     history = get_customer_history(customer_id)
